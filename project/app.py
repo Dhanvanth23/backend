@@ -18,14 +18,16 @@ import budget_tracker
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
-app.url_map.strict_slashes = False  # ADD THIS LINE
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here-change-in-production')
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
 
+# 🔥 CHANGE THESE
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True
+
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400
 # Initialize Firebase Admin SDK
 try:
     if os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY'):
@@ -51,9 +53,13 @@ except Exception as e:
 db = firestore.client()
 
 # Initialize CORS
-CORS(app, 
+CORS(app,
      supports_credentials=True,
-     origins=['http://localhost:5000', 'http://127.0.0.1:5000'],
+     origins=[
+         "http://localhost:5000",
+         "http://127.0.0.1:5000",
+         "https://charming-mandazi-d8d57d.netlify.app"
+     ],
      allow_headers=['Content-Type'],
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 )
