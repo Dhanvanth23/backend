@@ -10,6 +10,7 @@ import secrets
 import re
 import functools
 from google.cloud import firestore
+from google.cloud.firestore_v1.base_query import FieldFilter
 import logging
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')
@@ -112,12 +113,12 @@ def register():
         users_ref = db.collection('users')
         
         # Check username
-        username_query = users_ref.where('username', '==', username).limit(1).get()
+        username_query = users_ref.where(filter=FieldFilter('username', '==', username)).limit(1).get()
         if username_query:
             return jsonify({'error': 'Username already exists'}), 409
         
         # Check email
-        email_query = users_ref.where('email', '==', email).limit(1).get()
+        email_query = users_ref.where(filter=FieldFilter('email', '==', email)).limit(1).get()
         if email_query:
             return jsonify({'error': 'Email already exists'}), 409
         
@@ -160,7 +161,7 @@ def login():
         
         # Find user by username
         users_ref = db.collection('users')
-        query = users_ref.where('username', '==', username).limit(1).get()
+        query = users_ref.where(filter=FieldFilter('username', '==', username)).limit(1).get()
         
         if not query:
             return jsonify({'error': 'Invalid username or PIN'}), 401
