@@ -54,15 +54,22 @@ db = firestore.client()
 
 # Initialize CORS
 CORS(app,
+     resources={r"/*": {
+         "origins": [
+             "http://localhost:5000",
+             "http://127.0.0.1:5000",
+             "https://charming-mandazi-d8d57d.netlify.app"
+         ]
+     }},
      supports_credentials=True,
-     origins=[
-         "http://localhost:5000",
-         "http://127.0.0.1:5000",
-         "https://charming-mandazi-d8d57d.netlify.app"
-     ],
-     allow_headers=['Content-Type'],
+     allow_headers=['Content-Type', 'Authorization', 'Access-Control-Allow-Credentials'],
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 )
+
+# Fallback for /api to prevent 404s
+@app.route('/api', methods=['GET', 'OPTIONS'])
+def api_root():
+    return jsonify({'status': 'API is running'}), 200
 
 # Initialize modules
 auth.init_auth(db)
@@ -122,6 +129,18 @@ def internal_error(error):
 def bad_request(error):
     return jsonify({'error': 'Bad request'}), 400
 
+@app.after_request
+def after_request(response):
+    if 'Access-Control-Allow-Origin' not in response.headers:
+        response.headers.add('Access-Control-Allow-Origin', 'https://charming-mandazi-d8d57d.netlify.app')
+    if 'Access-Control-Allow-Headers' not in response.headers:
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    if 'Access-Control-Allow-Methods' not in response.headers:
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    if 'Access-Control-Allow-Credentials' not in response.headers:
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
+
 # Health check endpoint
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -148,6 +167,7 @@ def health_check():
     
 
 @app.route('/api/translations/<lang>', methods=['GET'])
+@app.route('/translations/<lang>', methods=['GET'])
 def get_translations(lang):
     """Get translations for specified language"""
     if lang not in ['en', 'ta']:
